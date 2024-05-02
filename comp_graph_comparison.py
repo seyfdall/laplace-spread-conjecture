@@ -10,8 +10,6 @@ import time
 from sage.all import *
 
 
-import numpy as np
-
 def make_comp_graph(a,b,c):
     """ Creates a complement family graph based on three sets of vertices in each of the three groups (with a bottom left, b bottom right, c top) in the complement family
 
