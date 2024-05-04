@@ -32,9 +32,14 @@ $ sbatch mpitest.sh
 ```
 
 This should output two lines of Hello World to a file along with what process number they are.  If this works, MPI is up and running and you can move onto the sage code.
-Since the sage code is packaged into your mamba environment, you should also be able to run the comp_graph_comparison.py file which as of writing will print the dominating
-edges and output a png image into your directory.
+Since the sage code is packaged into your mamba environment, you should also be able to run the dc_graph_comparison.py file which as of writing will cycle through graphs on vertices between 6 and 10 calculating spectral radii, eigenvectors, eccentricity maps, and storing all the relevant data inside of an hdf5 file.
 
 ```bash
-$ python comp_graph_comparison.py
+$ python3 dc_graph_comparison.py
+```
+
+Alternatively, if you wish to run the above with a dedicated processor from the supercomputer use the following command (also see https://rc.byu.edu/documentation/slurm/script-generator and related documentation for further details):
+
+```bash
+$ sbatch dc_graph.sh
 ```
