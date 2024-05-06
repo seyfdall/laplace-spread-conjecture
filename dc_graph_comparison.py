@@ -242,8 +242,8 @@ def compare_dc_family(G,plots = False):
     if plots:
         G_plot = G.plot(figsize=5)
         Comp_plot = dc_graph.plot(figsize=5)
-        G_plot.save('G_plot.png')
-        Comp_plot.save('Comp_plot.png')
+        G_plot.save('plots/G_plot.png')
+        Comp_plot.save('plots/dc_plot.png')
 
     # TODO: What happens if multiplicity increases?
     G_spec = np.array(G.spectrum(laplacian=True), dtype=float)
@@ -255,8 +255,8 @@ def compare_dc_family(G,plots = False):
         print("Counterexample found: Bad News")
         G_plot = G.plot(figsize=5)
         dc_plot = dc_graph.plot(figsize=5)
-        G_plot.save('G_plot.png')
-        dc_plot.save('dc_plot.png')
+        G_plot.save('plots/G_plot.png')
+        dc_plot.save('plots/dc_plot.png')
 
     # TODO: This is only getting the first eigenvector associated with spec radius,
     # What should we do if the spec radius multiplicity is greater than 1?
@@ -271,20 +271,14 @@ Main Method
 """
 
 if __name__ == "__main__":
-    # G = make_dc_graph(int(3),int(2),int(1))
-    # print(dom_sets(G))
-    # G_plot = G.plot(figsize=5)
-    # G_plot.save('dc_test.png')
-
-    # This generation is deterministic so we can trust the ordering
     # DC := Dandelion Complement
     ns = range(6,11)
 
     for n in ns:
-        with h5py.File('results_on_6.h5', 'w') as file:
+        with h5py.File(f'results_on_{n}.h5', 'w') as file:
             Graphs, Comps = generate_diameter_3_graphs(n)
             for i, G in enumerate(Graphs):
-                G_eign, dc_eign, G_eigvec, dc_eigvec, G_spec, dc_spec, v2e_map = compare_dc_family(G, plots=True)
+                G_eign, dc_eign, G_eigvec, dc_eigvec, G_spec, dc_spec, v2e_map = compare_dc_family(G)
                 v2e_arr = np.array([v2e_map[i] for i in range(n)])
 
                 group = file.create_group(f"Graph_{i}_on_{n}_vertices")
