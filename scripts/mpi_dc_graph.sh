@@ -1,7 +1,7 @@
 #!/bin/bash --login
 
 #SBATCH --time=00:10:00   # walltime
-#SBATCH --output=mpi_comp_results_sage.txt
+#SBATCH --output=../results/mpi_dc_results_sage.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks=2   # number of processor cores (i.e. tasks)
 #SBATCH --mem-per-cpu=2048M   # memory per CPU core

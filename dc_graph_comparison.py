@@ -273,11 +273,17 @@ Main Method
 if __name__ == "__main__":
     # DC := Dandelion Complement
     ns = range(6,11)
+    t0 = time.time()
+    tf = 14000
 
     for n in ns:
-        with h5py.File(f'results_on_{n}.h5', 'w') as file:
+        with h5py.File(f'results/results_on_{n}.h5', 'w') as file:
             Graphs, Comps = generate_diameter_3_graphs(n)
             for i, G in enumerate(Graphs):
+                t1 = time.time()
+                if t1 - t0 > tf:
+                    print("Break in Combo")
+                    break
                 G_eign, dc_eign, G_eigvec, dc_eigvec, G_spec, dc_spec, v2e_map = compare_dc_family(G)
                 v2e_arr = np.array([v2e_map[i] for i in range(n)])
 
@@ -289,6 +295,10 @@ if __name__ == "__main__":
                 group.create_dataset('G_spec', data=G_spec)
                 group.create_dataset('DC_spec', data=dc_spec)
                 group.create_dataset('v2e_map', data=v2e_arr)
+            
+            if t1 - t0 > tf:
+                    print("Break in Combo")
+                    break
 
     # Example of how to read in data from an h5df file in Python
     # with h5py.File('results_on_6.h5', 'r') as file:

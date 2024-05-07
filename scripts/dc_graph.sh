@@ -1,10 +1,10 @@
 #!/bin/bash --login
 
 #SBATCH --time=04:00:00   # walltime
-#SBATCH --output=comp_results_sage.txt
+#SBATCH --output=../results/dc_results_sage.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks=1   # number of processor cores (i.e. tasks)
-#SBATCH --mem-per-cpu=4096M   # memory per CPU core
+#SBATCH --mem-per-cpu=8192M   # memory per CPU core
 #SBATCH -J "simple_comp_graph_test"   # job name
 #SBATCH --mail-user=dseyfr99@gmail.com   # email address
 #SBATCH --mail-type=BEGIN

@@ -25,7 +25,7 @@ $ mamba install sage
 ```
 
 ## Usage
-To test your setup, run the following command after activating your mamba environment.
+To test your setup, run the following command after activating your mamba environment and changing directory into the scripts folder.
 
 ```bash
 $ sbatch mpitest.sh
