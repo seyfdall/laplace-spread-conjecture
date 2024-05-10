@@ -28,9 +28,12 @@ def generate_diameter_3_graphs(n):
     """
     Graphs, Comps = [], []
     for G in graphs(n):
+        print("level 1")
         if G.diameter() == 3:
+            print("level 2")
             H = G.complement()
             if H.diameter() == 3:
+                print("level 3")
                 Graphs.append(G)
                 Comps.append(H)
     return Graphs, Comps
@@ -272,9 +275,9 @@ Main Method
 
 if __name__ == "__main__":
     # DC := Dandelion Complement
-    ns = range(6,11)
+    ns = range(6,12)
     t0 = time.time()
-    tf = 14000
+    tf = 50000
 
     for n in ns:
         with h5py.File(f'results/results_on_{n}.h5', 'w') as file:
@@ -299,6 +302,9 @@ if __name__ == "__main__":
             if t1 - t0 > tf:
                     print("Break in Combo")
                     break
+
+    Graphs, Comps = generate_diameter_3_graphs(10)
+    # 4135644 - print(len(Graphs))
 
     # Example of how to read in data from an h5df file in Python
     # with h5py.File('results_on_6.h5', 'r') as file:

@@ -22,13 +22,14 @@ $ mamba activate sage_mpi
 $ mamba install openmpi
 $ mamba install mpi4py
 $ mamba install sage
+$ mamba install jupyter
 ```
 
 ## Usage
 To test your setup, run the following command after activating your mamba environment and changing directory into the scripts folder.
 
 ```bash
-$ sbatch mpitest.sh
+$ sbatch scripts/mpitest.sh
 ```
 
 This should output two lines of Hello World to a file along with what process number they are.  If this works, MPI is up and running and you can move onto the sage code.
@@ -41,5 +42,7 @@ $ python3 dc_graph_comparison.py
 Alternatively, if you wish to run the above with a dedicated processor from the supercomputer use the following command (also see https://rc.byu.edu/documentation/slurm/script-generator and related documentation for further details):
 
 ```bash
-$ sbatch dc_graph.sh
+$ sbatch scripts/dc_graph.sh
 ```
+
+Preliminary results are shown in the Jupyter notebook data_analysis.ipynb describing general distribution of the difference of the entries of the largest eigenvectors of the original and complement family graphs. 
