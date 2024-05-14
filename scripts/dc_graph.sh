@@ -1,6 +1,6 @@
 #!/bin/bash --login
 
-#SBATCH --time=2:00:00   # walltime
+#SBATCH --time=01:00:00   # walltime
 #SBATCH --output=./results/dc_results_sage.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks=1   # number of processor cores (i.e. tasks)

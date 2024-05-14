@@ -96,7 +96,7 @@ def test_eigenvector(a,b,c):
 
 # TODO: Create generic relabelling function to relabel all graphs according to a desired order
 # i.e. pass in a graph on n vertices and a map of each vertex mapping to what it should be
-def relabel_graph(G, v2e_map=None):
+def relabel_graph(G, v2dc_group_map=None):
     """ Relabel graph G according to the desired mapping.  The purpose of this is to help with the data analysis
         as in, we'll be able to evaluate averages, maxes, mins and sign changes across eigenvector entries since
         each will be aligned with a different eccentricity instead of being random.
@@ -105,7 +105,7 @@ def relabel_graph(G, v2e_map=None):
         ----------
         G: Sagemath graph on n vertices
             Graph to be relabelled.
-        v2e_map: list(n)
+        v2dc_group_map: list(n)
             Map of eccentricities of each node
             The map should have two vertices mapping to eccentricity 3 
                 The graph may have more vertices of eccentricity 3, but these will just be placed in the 2 slot
@@ -223,19 +223,19 @@ def compare_dc_family(G,plots = False):
     dc_graph = make_dc_graph(len(a), len(b), len(c))
 
     # Relabel the comp graph to match passed in graph
-    v2e_map = {len(a)+len(b)+len(c): 0, len(a)+len(b)+len(c)+1: 4}
+    v2dc_group_map = {len(a)+len(b)+len(c): 0, len(a)+len(b)+len(c)+1: 4}
     relabel_map = {len(a)+len(b)+len(c): x, len(a)+len(b)+len(c)+1: y}
     for i, vertex in enumerate(a):
         relabel_map[i] = vertex
-        v2e_map[i] = 1
+        v2dc_group_map[i] = 1
     for i, vertex in enumerate(b):
         j = i + len(a)
         relabel_map[j] = vertex
-        v2e_map[j] = 3
+        v2dc_group_map[j] = 3
     for i, vertex in enumerate(c):
         j = i + len(a) + len(b)
         relabel_map[j] = vertex
-        v2e_map[j] = 2
+        v2dc_group_map[j] = 2
     dc_graph.relabel(relabel_map)
 
     if plots:
@@ -266,7 +266,7 @@ def compare_dc_family(G,plots = False):
     G_eigvec = G_eigvec / np.linalg.norm(G_eigvec)
     dc_eigvec = dc_eigvec / np.linalg.norm(dc_eigvec)
 
-    return G_eign, dc_eign, G_eigvec, dc_eigvec, G_spec, dc_spec, v2e_map
+    return G_eign, dc_eign, G_eigvec, dc_eigvec, G_spec, dc_spec, v2dc_group_map
 
 
 """
@@ -287,8 +287,8 @@ if __name__ == "__main__":
                 if t1 - t0 > tf:
                     print("Break in Combo")
                     break
-                G_eign, dc_eign, G_eigvec, dc_eigvec, G_spec, dc_spec, v2e_map = compare_dc_family(G)
-                v2e_arr = np.array([v2e_map[i] for i in range(n)])
+                G_eign, dc_eign, G_eigvec, dc_eigvec, G_spec, dc_spec, v2dc_group_map = compare_dc_family(G)
+                v2dc_group_arr = np.array([v2dc_group_map[i] for i in range(n)])
 
                 group = file.create_group(f"Graph_{i}_on_{n}_vertices")
                 group.attrs['G_spec_radius'] = G_eign
@@ -297,22 +297,10 @@ if __name__ == "__main__":
                 group.create_dataset('DC_eigvec', data=dc_eigvec)
                 group.create_dataset('G_spec', data=G_spec)
                 group.create_dataset('DC_spec', data=dc_spec)
-                group.create_dataset('v2e_map', data=v2e_arr)
+                group.create_dataset('v2dc_group_map', data=v2dc_group_arr)
             
             if t1 - t0 > tf:
                     print("Break in Combo")
                     break
-
-    Graphs, Comps = generate_diameter_3_graphs(10)
-    # 4135644 - print(len(Graphs))
-
-    # Example of how to read in data from an h5df file in Python
-    # with h5py.File('results_on_6.h5', 'r') as file:
-    #     for i in range(len(Graphs)):
-    #         group = file[f'Graph_{i}_on_{n}_vertices']
-    #         print([attribute for attribute in group.attrs])
-    #         print(group.attrs['DC_spec_radius'])
-    #         print(group['G_eigvec'][:])
-    #         print('\n')
 
 
