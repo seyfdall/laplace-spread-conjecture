@@ -1,2 +1,0 @@
-/var/spool/slurmd/job65605076/slurm_script: line 23:  7932 Killed                  python3 dc_graph_comparison.py
-slurmstepd: error: Detected 2 oom_kill events in StepId=65605076.batch. Some of the step tasks have been OOM Killed.

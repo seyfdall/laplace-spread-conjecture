@@ -28,12 +28,9 @@ def generate_diameter_3_graphs(n):
     """
     Graphs, Comps = [], []
     for G in graphs(n):
-        print("level 1")
         if G.diameter() == 3:
-            print("level 2")
             H = G.complement()
             if H.diameter() == 3:
-                print("level 3")
                 Graphs.append(G)
                 Comps.append(H)
     return Graphs, Comps
@@ -127,7 +124,6 @@ def relabel_graph(G, v2e_map=None):
     #Determine the dominating edges
     dom_edges = dom_sets(G)
 
-    # TODO: Begin forming groups a,b,c,d,e from remaining vertices
     # Get remaining vertices
     remaining_vertices = set(G.vertices()) - set([x,y])
     for edge in dom_edges:
@@ -191,7 +187,7 @@ def compare_dc_family(G,plots = False):
                 y = v2
                 break
 
-    #Determine the dominating edges
+    # Determine the dominating edges
     dom_edges = dom_sets(G)
 
     # Get remaining vertices
@@ -227,7 +223,7 @@ def compare_dc_family(G,plots = False):
     dc_graph = make_dc_graph(len(a), len(b), len(c))
 
     # Relabel the comp graph to match passed in graph
-    v2e_map = {len(a)+len(b)+len(c): 3, len(a)+len(b)+len(c)+1: 3}
+    v2e_map = {len(a)+len(b)+len(c): 0, len(a)+len(b)+len(c)+1: 4}
     relabel_map = {len(a)+len(b)+len(c): x, len(a)+len(b)+len(c)+1: y}
     for i, vertex in enumerate(a):
         relabel_map[i] = vertex
@@ -235,7 +231,7 @@ def compare_dc_family(G,plots = False):
     for i, vertex in enumerate(b):
         j = i + len(a)
         relabel_map[j] = vertex
-        v2e_map[j] = 1
+        v2e_map[j] = 3
     for i, vertex in enumerate(c):
         j = i + len(a) + len(b)
         relabel_map[j] = vertex
@@ -266,6 +262,10 @@ def compare_dc_family(G,plots = False):
     G_eigvec = np.array(sorted(G.eigenvectors(laplacian=True))[-1][1][0], dtype=float)
     dc_eigvec = np.array(sorted(dc_graph.eigenvectors(laplacian=True))[-1][1][0], dtype=float)
 
+    # Normalize the vectors for comparison
+    G_eigvec = G_eigvec / np.linalg.norm(G_eigvec)
+    dc_eigvec = dc_eigvec / np.linalg.norm(dc_eigvec)
+
     return G_eign, dc_eign, G_eigvec, dc_eigvec, G_spec, dc_spec, v2e_map
 
 
@@ -275,7 +275,7 @@ Main Method
 
 if __name__ == "__main__":
     # DC := Dandelion Complement
-    ns = range(6,12)
+    ns = range(6,9)
     t0 = time.time()
     tf = 50000
 
