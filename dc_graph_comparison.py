@@ -9,9 +9,10 @@ import itertools
 import time
 from sage.all import *
 import h5py
+import os
 
 
-def generate_diameter_3_graphs(n):
+def generate_diameter_3_graphs(n, return_comps=False):
     """ Cycles through graphs on n vertices finding the ones with diameter 3 whose complements have diameter 3 and saves both.
         This generation is deterministic so we can trust the ordering for reruns.
         Parameters
@@ -23,17 +24,27 @@ def generate_diameter_3_graphs(n):
         -------
         Graphs: list(graphs)
             List of Sagemath graphs whose diameter is 3 and whose complement is also diameter 3
-        Comps: list(graphs)
+        Comps: list(graphs) (optional)
             The complement of the graphs above
     """
-    Graphs, Comps = [], []
+    if return_comps:
+        Graphs, Comps = [], []
+        for G in graphs(n):
+            if G.diameter() == 3:
+                H = G.complement()
+                if H.diameter() == 3:
+                    Graphs.append(G)
+                    Comps.append(H)
+        return Graphs, Comps
+    
+    # Split this way to save on RAM
+    Graphs = []
     for G in graphs(n):
         if G.diameter() == 3:
             H = G.complement()
             if H.diameter() == 3:
                 Graphs.append(G)
-                Comps.append(H)
-    return Graphs, Comps
+    return Graphs
 
 def make_dc_graph(a,b,c):
     """ Creates a complement family graph based on three sets of vertices in each of the three groups (with a bottom left, b bottom right, c top) in the complement family
@@ -175,7 +186,7 @@ def relabel_graph(G, v2dc_group_map=None):
 
 """One of our goals is, given any graph with diameter 3 whose complement also has diameter 3 to determine which complement family graph it would fall under after transformations."""
 
-def compare_dc_family(G,plots = False):
+def compare_dc_family(G, plots=False):
     """Function to determine relative comp graph Family"""
 
     # First determine a pair of eccentricity vertices
@@ -221,6 +232,7 @@ def compare_dc_family(G,plots = False):
 
     # Create comparison complement family and truss graph
     dc_graph = make_dc_graph(len(a), len(b), len(c))
+
 
     # Relabel the comp graph to match passed in graph
     v2dc_group_map = {len(a)+len(b)+len(c): 0, len(a)+len(b)+len(c)+1: 4}
@@ -269,19 +281,149 @@ def compare_dc_family(G,plots = False):
     return G_eign, dc_eign, G_eigvec, dc_eigvec, G_spec, dc_spec, v2dc_group_map
 
 
+def compare_sym_dc_family(G, plots=False):
+    """Function to determine relative symmetric comp graph Family"""
+    # TODO: Absorb this function into the one above if possible for code simplification
+
+    # First determine a pair of eccentricity vertices
+    x, y = -1, -1
+    for v1 in G.vertices():
+        for v2 in G.vertices():
+            if v1 != v2 and len(G.shortest_path(v1, v2)) == 3+1: # Counts nodes instead of edges in path
+                x = v1
+                y = v2
+                break
+
+    # Determine the dominating edges
+    dom_edges = dom_sets(G)
+
+    # Get remaining vertices
+    remaining_vertices = set(G.vertices()) - set([x,y])
+    for edge in dom_edges:
+        remaining_vertices = remaining_vertices - set(edge)
+
+    # Cycle through remaining vertices and assign their groups
+    a = set()
+    b = set()
+    c = set()
+
+    # Determine a and b groups (dominating nodes)
+    for edge in dom_edges:
+        v1, v2 = edge
+        if len(G.shortest_path(v1,x)) == 2:
+            a.add(v1)
+            b.add(v2)
+        else:
+            a.add(v2)
+            b.add(v1)
+
+    # End if not an even amount of vertices
+    # TODO: How should we handle an odd total of dominating vertices?  Skipping for now
+    dom_vert_count = len(a) + len(b)
+    if dom_vert_count % 2 != 0:
+        return
+    
+    vertices_to_remove = set()
+    # Determine c group (shared between dominating edges)
+    for node in remaining_vertices:
+        if len(G.shortest_path(node,x)) > 1 and len(G.shortest_path(node,y)) > 1:
+            c.add(node)
+            vertices_to_remove.add(node)
+    remaining_vertices = remaining_vertices.difference(vertices_to_remove)
+    vertices_to_remove.clear()
+
+    # Create comparison complement family and truss graph
+    dc_graph = make_dc_graph(len(a), len(b), len(c))
+    dc_sym_graph = make_dc_graph(dom_vert_count // 2, dom_vert_count // 2, len(c))
+
+    # Relabel the comp graph to match passed in graph
+    v2dc_group_map = {len(a)+len(b)+len(c): 0, len(a)+len(b)+len(c)+1: 4}
+    relabel_map = {len(a)+len(b)+len(c): x, len(a)+len(b)+len(c)+1: y}
+    for i, vertex in enumerate(a):
+        relabel_map[i] = vertex
+        v2dc_group_map[i] = 1
+    for i, vertex in enumerate(b):
+        j = i + len(a)
+        relabel_map[j] = vertex
+        v2dc_group_map[j] = 3
+    for i, vertex in enumerate(c):
+        j = i + len(a) + len(b)
+        relabel_map[j] = vertex
+        v2dc_group_map[j] = 2
+    dc_graph.relabel(relabel_map)
+
+    # TODO: May need to update this to account for the switching around to fit symmetry
+    v2dc_sym_group_map = {len(a)+len(b)+len(c): 0, len(a)+len(b)+len(c)+1: 4}
+    relabel_sym_map = {len(a)+len(b)+len(c): x, len(a)+len(b)+len(c)+1: y}
+    for i, vertex in enumerate(a):
+        relabel_sym_map[i] = vertex
+        v2dc_sym_group_map[i] = 1
+    for i, vertex in enumerate(b):
+        j = i + len(a)
+        relabel_sym_map[j] = vertex
+        v2dc_sym_group_map[j] = 3
+    for i, vertex in enumerate(c):
+        j = i + len(a) + len(b)
+        relabel_sym_map[j] = vertex
+        v2dc_sym_group_map[j] = 2
+    dc_sym_graph.relabel(relabel_sym_map)
+
+    if plots:
+        G_plot = G.plot(figsize=5)
+        Comp_plot = dc_graph.plot(figsize=5)
+        Comp_sym_plot = dc_sym_graph.plot(figsize=5)
+        G_plot.save('plots/G_plot.png')
+        Comp_plot.save('plots/dc_plot.png')
+        Comp_sym_plot.save('plots/dc_sym_plot.png')
+
+    # TODO: What happens if multiplicity increases?
+    G_spec = np.array(G.spectrum(laplacian=True), dtype=float)
+    dc_spec = np.array(dc_graph.spectrum(laplacian=True), dtype=float)
+    dc_sym_spec = np.array(dc_graph.spectrum(laplacian=True), dtype=float)
+    G_eign = np.abs(float(G_spec[0]))
+    dc_eign = np.abs(float(dc_spec[0]))
+    dc_sym_eign = np.abs(float(dc_sym_spec[0]))
+
+    if G_eign > dc_eign:
+        print("Asymmetric Counterexample found: Bad News")
+        G_plot = G.plot(figsize=5)
+        dc_plot = dc_graph.plot(figsize=5)
+        G_plot.save('plots/G_plot.png')
+        dc_plot.save('plots/dc_plot.png')
+
+    if dc_eign > dc_sym_eign:
+        print("Symmetric Counterexample found: Bad News")
+        dc_plot = dc_graph.plot(figsize=5)
+        dc_sym_plot = dc_sym_graph.plot(figsize=5)
+        dc_plot.save('plots/dc_plot.png')
+        dc_sym_plot.save('plots/dc_sym_plot.png')
+
+    # TODO: This is only getting the first eigenvector associated with spec radius,
+    # What should we do if the spec radius multiplicity is greater than 1?
+    G_eigvec = np.array(sorted(G.eigenvectors(laplacian=True))[-1][1][0], dtype=float)
+    dc_eigvec = np.array(sorted(dc_graph.eigenvectors(laplacian=True))[-1][1][0], dtype=float)
+    dc_sym_eigvec = np.array(sorted(dc_sym_graph.eigenvectors(laplacian=True))[-1][1][0], dtype=float)
+
+    # Normalize the vectors for comparison
+    G_eigvec = G_eigvec / np.linalg.norm(G_eigvec)
+    dc_eigvec = dc_eigvec / np.linalg.norm(dc_eigvec)
+    dc_sym_eigvec = dc_sym_eigvec / np.linalg.norm(dc_sym_eigvec)
+
+    return G_eign, dc_eign, dc_sym_eign, G_eigvec, dc_eigvec, dc_sym_eigvec, G_spec, dc_spec, dc_sym_spec, v2dc_group_map, v2dc_sym_group_map
+
+
 """
-Main Method
+Graph search methods
 """
 
-if __name__ == "__main__":
-    # DC := Dandelion Complement
-    ns = range(6,9)
+def dc_search(ns, tf, dir_path):
+    """Search and compare between graphs and their complement family versions"""
     t0 = time.time()
-    tf = 50000
 
     for n in ns:
-        with h5py.File(f'results/results_on_{n}.h5', 'w') as file:
-            Graphs, Comps = generate_diameter_3_graphs(n)
+        file_path = dir_path + f'/results/results_on_{n}.h5'
+        with h5py.File(file_path, 'w') as file:
+            Graphs = generate_diameter_3_graphs(n)
             for i, G in enumerate(Graphs):
                 t1 = time.time()
                 if t1 - t0 > tf:
@@ -299,8 +441,63 @@ if __name__ == "__main__":
                 group.create_dataset('DC_spec', data=dc_spec)
                 group.create_dataset('v2dc_group_map', data=v2dc_group_arr)
             
-            if t1 - t0 > tf:
+        if t1 - t0 > tf:
+            print("Break in Combo")
+            break
+            
+
+def dc_sym_search(ns, tf, dir_path):
+    """Search and compare between graphs, their complement family versions, and their symmetric versions"""
+    t0 = time.time()
+
+    for n in ns:
+        file_path = dir_path + f'/sym_results/sym_results_on_{n}.h5'
+        print(file_path)
+        with h5py.File(file_path, 'w') as file:
+            Graphs = generate_diameter_3_graphs(n)
+            for i, G in enumerate(Graphs):
+                t1 = time.time()
+                if t1 - t0 > tf:
                     print("Break in Combo")
                     break
+
+                results = compare_sym_dc_family(G)
+                if not results:
+                    continue
+
+                G_eign, dc_eign, dc_sym_eign, G_eigvec, dc_eigvec, dc_sym_eigvec, G_spec, dc_spec, dc_sym_spec, v2dc_group_map, v2dc_sym_group_map = results
+                v2dc_group_arr = np.array([v2dc_group_map[i] for i in range(n)])
+                v2dc_sym_group_arr = np.array([v2dc_sym_group_map[i] for i in range(n)])
+
+                group = file.create_group(f"Graph_{i}_on_{n}_vertices")
+                group.attrs['G_spec_radius'] = G_eign
+                group.attrs['DC_spec_radius'] = dc_eign
+                group.attrs['DC_sym_spec_radius'] = dc_sym_eign
+                group.create_dataset('G_eigvec', data=G_eigvec)
+                group.create_dataset('DC_eigvec', data=dc_eigvec)
+                group.create_dataset('DC_sym_eigvec', data=dc_sym_eigvec)
+                group.create_dataset('G_spec', data=G_spec)
+                group.create_dataset('DC_spec', data=dc_spec)
+                group.create_dataset('DC_sym_spec', data=dc_sym_spec)
+                group.create_dataset('v2dc_group_map', data=v2dc_group_arr)
+                group.create_dataset('v2dc_sym_group_map', data=v2dc_sym_group_arr)
+            
+        if t1 - t0 > tf:
+            print("Break in Combo")
+            break
+
+
+"""
+Main Method
+"""
+
+if __name__ == "__main__":
+    # DC := Dandelion Complement
+    ns = range(6,9)
+    tf = 85000
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    dc_search(ns, tf, dir_path)
+    # dc_sym_search(ns, tf, dir_path)
+    
 
 

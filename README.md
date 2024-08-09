@@ -1,6 +1,6 @@
 # Laplace-Spread-Conjecture
 This Repository is designed to numerically test and visualize ideas for alternate paths to proving the Laplacian Spread Conjecture and stronger conjectures as well 
-(see https://arxiv.org/abs/2201.04225 for the motivation behind this project).  It utilizes Sagemath based in Python for graph generation and MPI to parallelize numerical tests.
+(see https://arxiv.org/abs/2201.04225 for the motivation behind this project).  It utilizes Sagemath based in Python for graph generation and MPI to parallelize numerical tests.  Other current papers of interest that may help include: https://journals.uwyo.edu/index.php/ela/article/view/29/29.
 
 ## Table of Contents
 - [Installation](#installation)
